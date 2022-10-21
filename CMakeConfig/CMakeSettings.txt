@@ -137,6 +137,8 @@ ELSE()
     SET(FBX_DEBUG)
 ENDIF()
 
+
+
 IF(WIN32)
     SET(CMAKE_USE_RELATIVE_PATHS 0)
     SET(LIB_EXTENSION ".lib")
@@ -162,8 +164,27 @@ IF(WIN32)
     ENDIF()
     SET(FBX_CC_RTLd "/MDd")
     SET(FBX_CC_RTL "/MD")
-    
-    SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/libfbxsdk-adsk${LIB_EXTENSION}")
+
+    STRING(SUBSTRING ${TARGET_PRODUCT} 4 4 VER)
+
+
+    #判断一下低版本，2019.0及以下的版本lib库需要分开链接
+    IF(NOT LOWFBXSDK)
+        IF(TARGET_PRODUCT MATCHES "^Maya[0-9]+$")
+            SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/fbxmaya_amd64${LIB_EXTENSION}")
+        ELSEIF(TARGET_PRODUCT MATCHES "^3ds Max [0-9]+$")
+            SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/fbxmax_amd64${LIB_EXTENSION}")
+        ELSE()
+             MESSAGE("Unknown TARGET_PRODUCT specification ('${TARGET_PRODUCT}')")
+            MESSAGE("Must be either 'MayaYYYY' or '3ds Max YYYY' where YYYY is the 4 digit version number.")
+            MESSAGE(FATAL_ERROR "")
+            RETURN()
+        ENDIF()
+    ELSE()
+        SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/libfbxsdk-adsk${LIB_EXTENSION}")
+    ENDIF()
+
+
 ELSE(WIN32)
     MESSAGE("Detecting compiler version used")
     EXEC_PROGRAM(${CMAKE_CXX_COMPILER} ARGS --version OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
@@ -188,10 +209,10 @@ ELSE(WIN32)
     SET(FBX_FILESDK_LIB "fbxsdk-adsk${LIB_EXTENSION}")
 
     # Abort if MAYAPATH is not defined
-    IF ("$ENV{MAYAPATH}" STREQUAL "")
-       MESSAGE(FATAL_ERROR "environment variable MAYAPATH is not set.")
-       RETURN()
-    ENDIF()
+    #IF ("$ENV{MAYAPATH}" STREQUAL "")
+    #   MESSAGE(FATAL_ERROR "environment variable MAYAPATH is not set.")
+    #   RETURN()
+    #ENDIF()
 ENDIF()
 
 # check that -DTARGET_PRODUCT has been specified at invocation
