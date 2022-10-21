@@ -1,17 +1,16 @@
 SET(CMAKE_MIN_REQ_VERSION 2.4)
 cmake_minimum_required(VERSION ${CMAKE_MIN_REQ_VERSION})
 
-INCLUDE("../CMakeSettings.txt")
+INCLUDE("CMakeSettings.txt")
 
 IF(FBX_MAYA)
     SET(FBX_TARGET_SOURCE 
-        mayaextension.h 
-        mayatemplateplugin.cxx
-    )
+        ../Code/mayaextension.h
+        ../Code/mayatemplateplugin.cxx  )
 ELSEIF(FBX_3DSMAX)
     SET(FBX_TARGET_SOURCE 
-        maxextension.h
-        maxtemplateplugin.cxx
+        ../Code/maxextension.h
+        ../Code/maxtemplateplugin.cxx
     )
 ENDIF()
 

@@ -5,7 +5,7 @@
 # ===================================================================================
 
 STRING(REGEX REPLACE "/[^/]*$" "" FBX_CMAKE_ROOT "${CMAKE_CURRENT_LIST_FILE}")
-GET_FILENAME_COMPONENT(FBX_ROOT  "${FBX_CMAKE_ROOT}/.." ABSOLUTE)
+GET_FILENAME_COMPONENT(FBX_ROOT  "${FBX_CMAKE_ROOT}" ABSOLUTE)
 STRING(REGEX MATCH "[^/]+$" FBX_CMAKE_OUTPUT_FOLDER "${CMAKE_CURRENT_BINARY_DIR}")
 
 SET(FBX_CMAKELIST_DEPENDENT)
@@ -121,12 +121,6 @@ IF(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER ${CMAKE_MIN_REQ_VERSION
     ENDIF()
 ENDIF()
 
-# check that -DTARGET_PRODUCT has been specified at invocation
-IF(NOT TARGET_PRODUCT)
-    MESSAGE(FATAL_ERROR "Missing TARGET_PRODUCT define")
-    RETURN()
-ENDIF()
-
 
 SET(FBXEXT_TARGET)      # target product name deducted from command line -DTARGET_PRODUCT=
 SET(FBX_VARIANT)        # can be set at command line with -DFBX_VARIANT=debug or release (Unix only)
@@ -200,7 +194,11 @@ ELSE(WIN32)
     ENDIF()
 ENDIF()
 
-
+# check that -DTARGET_PRODUCT has been specified at invocation
+IF(NOT TARGET_PRODUCT)
+    MESSAGE(FATAL_ERROR "Missing TARGET_PRODUCT define")
+    RETURN()
+ENDIF()
 
     
 IF(TARGET_PRODUCT MATCHES "^Maya[0-9]+$")
