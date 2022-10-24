@@ -10,6 +10,7 @@
 ****************************************************************************************/
 
 #include "maxextension.h"
+#include "fbxmethod.h"
 
 class MaxExtensionTemplatePlugin : public FbxPlugin
 {
@@ -132,6 +133,8 @@ void MaxExt_ExportEnd(FbxScene* pFbxScene, INode* pMaxRootNode)
 	//Called after the scene has been fully translated into fbx. This is the last function called
 	//before the extension plugin is done with the export process. Any clean-up or last minute
 	//modification to the scene must be done now.
+
+    Fbx_SetName(pFbxScene, pMaxRootNode);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

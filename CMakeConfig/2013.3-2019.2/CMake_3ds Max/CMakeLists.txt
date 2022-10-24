@@ -6,11 +6,16 @@ INCLUDE("CMakeSettings.txt")
 IF(FBX_MAYA)
     SET(FBX_TARGET_SOURCE 
         ../../Code/mayaextension.h
-        ../../Code/mayatemplateplugin.cxx  )
+        ../../Code/fbxmethod.h
+        ../../Code/mayatemplateplugin.cxx
+        ../../Code/fbxmethod.cxx  
+    )
 ELSEIF(FBX_3DSMAX)
     SET(FBX_TARGET_SOURCE 
         ../../Code/maxextension.h
+        ../../Code/fbxmethod.h
         ../../Code/maxtemplateplugin.cxx
+        ../../Code/fbxmethod.cxx
     )
 ENDIF()
 

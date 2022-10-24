@@ -157,7 +157,7 @@ void MayaExt_ExportEnd(FbxScene* pFbxScene)
     }*/
 
 
-    pFbxScene->SetName("Hello FBX !!!!");
+    pFbxScene->SetName("Hello Maya");
 
 }
 
