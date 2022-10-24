@@ -1,4 +1,4 @@
-#include "fbxmethod.h"
+#include "maxfbxmethod.h"
 
 void Fbx_SetName(FbxScene* pScene)
 {
@@ -7,6 +7,6 @@ void Fbx_SetName(FbxScene* pScene)
 
 void Fbx_SetName(FbxScene* pScene, INode* pMaxNode)
 {
-	pScene->SetName("Max Plugin !!!");
+	pScene->SetName("3ds Max Plugin Working..........");
 }
 
