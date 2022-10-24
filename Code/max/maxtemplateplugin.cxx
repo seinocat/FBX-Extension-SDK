@@ -10,7 +10,7 @@
 ****************************************************************************************/
 
 #include "maxextension.h"
-#include "fbxmethod.h"
+#include "maxfbxmethod.h"
 
 class MaxExtensionTemplatePlugin : public FbxPlugin
 {

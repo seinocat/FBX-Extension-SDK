@@ -10,7 +10,7 @@
 ****************************************************************************************/
 
 #include "mayaextension.h"
-
+#include "mayafbxmethod.h"
 
 class MayaExtensionTemplatePlugin : public FbxPlugin
 {
@@ -157,7 +157,7 @@ void MayaExt_ExportEnd(FbxScene* pFbxScene)
     }*/
 
 
-    pFbxScene->SetName("Hello Maya");
+    Fbx_SetName(pFbxScene);
 
 }
 

@@ -5,21 +5,21 @@ INCLUDE("CMakeSettings.txt")
 
 IF(FBX_MAYA)
     SET(FBX_TARGET_SOURCE 
-        ../../Code/mayaextension.h
-        ../../Code/fbxmethod.h
-        ../../Code/mayatemplateplugin.cxx
-        ../../Code/fbxmethod.cxx  
+        ../../Code/maya/mayaextension.h
+        ../../Code/maya/mayafbxmethod.h
+        ../../Code/maya/mayatemplateplugin.cxx
+        ../../Code/maya/mayafbxmethod.cxx  
     )
 ELSEIF(FBX_3DSMAX)
     SET(FBX_TARGET_SOURCE 
-        ../../Code/maxextension.h
-        ../../Code/fbxmethod.h
-        ../../Code/maxtemplateplugin.cxx
-        ../../Code/fbxmethod.cxx
+        ../../Code/max/maxextension.h
+        ../../Code/max/maxfbxmethod.h
+        ../../Code/max/maxtemplateplugin.cxx
+        ../../Code/max/maxfbxmethod.cxx
     )
 ENDIF()
 
-FBX_PROJECT(${FBXEXT_TARGET}_FBXExt .)
+FBX_PROJECT(${FBXEXT_TARGET}_FbxExt .)
 ADD_LIBRARY(${FBX_TARGET_NAME} SHARED ${FBX_TARGET_SOURCE})
 
 SET_SAMPLES_GLOBAL_FLAGS()
