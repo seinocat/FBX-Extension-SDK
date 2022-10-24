@@ -5,7 +5,7 @@
 # ===================================================================================
 
 STRING(REGEX REPLACE "/[^/]*$" "" FBX_CMAKE_ROOT "${CMAKE_CURRENT_LIST_FILE}")
-GET_FILENAME_COMPONENT(FBX_ROOT  "${FBX_CMAKE_ROOT}" ABSOLUTE)
+GET_FILENAME_COMPONENT(FBX_ROOT  "${FBX_CMAKE_ROOT}/.." ABSOLUTE)
 STRING(REGEX MATCH "[^/]+$" FBX_CMAKE_OUTPUT_FOLDER "${CMAKE_CURRENT_BINARY_DIR}")
 
 SET(FBX_CMAKELIST_DEPENDENT)
@@ -125,6 +125,7 @@ ENDIF()
 SET(FBXEXT_TARGET)      # target product name deducted from command line -DTARGET_PRODUCT=
 SET(FBX_VARIANT)        # can be set at command line with -DFBX_VARIANT=debug or release (Unix only)
 SET(FBX_ARCH "x64")     # only 64 bits
+SET(TARGET_PRODUCT "Maya 2018") #修改成fbx ext对应的dcc版本
 
 
 IF(NOT FBX_VARIANT)
@@ -165,26 +166,8 @@ IF(WIN32)
     SET(FBX_CC_RTLd "/MDd")
     SET(FBX_CC_RTL "/MD")
 
-    STRING(SUBSTRING ${TARGET_PRODUCT} 4 4 VER)
-
-
-    #判断一下低版本，2019.0及以下的版本lib库需要分开链接
-    IF(NOT LOWFBXSDK)
-        IF(TARGET_PRODUCT MATCHES "^Maya[0-9]+$")
-            SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/fbxmaya_amd64${LIB_EXTENSION}")
-        ELSEIF(TARGET_PRODUCT MATCHES "^3ds Max [0-9]+$")
-            SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/fbxmax_amd64${LIB_EXTENSION}")
-        ELSE()
-             MESSAGE("Unknown TARGET_PRODUCT specification ('${TARGET_PRODUCT}')")
-            MESSAGE("Must be either 'MayaYYYY' or '3ds Max YYYY' where YYYY is the 4 digit version number.")
-            MESSAGE(FATAL_ERROR "")
-            RETURN()
-        ENDIF()
-    ELSE()
-        SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/libfbxsdk-adsk${LIB_EXTENSION}")
-    ENDIF()
-
-
+    SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/libfbxsdk-adsk${LIB_EXTENSION}")
+    
 ELSE(WIN32)
     MESSAGE("Detecting compiler version used")
     EXEC_PROGRAM(${CMAKE_CXX_COMPILER} ARGS --version OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
@@ -224,6 +207,7 @@ ENDIF()
     
 IF(TARGET_PRODUCT MATCHES "^Maya[0-9]+$")
     SET(FBX_MAYA 1)
+
     STRING(SUBSTRING ${TARGET_PRODUCT} 0 8 TARGET_PRODUCT)
     STRING(SUBSTRING ${TARGET_PRODUCT} 0 4 TMP)
     STRING(TOLOWER ${TMP} FBXEXT_TARGET)
@@ -287,39 +271,9 @@ IF(TARGET_PRODUCT MATCHES "^Maya[0-9]+$")
         ${PRFIX}Foundation${SUFX}
         ${EXTRA_LIBS}
     )
-ELSEIF(TARGET_PRODUCT MATCHES "^3ds Max [0-9]+$")
-    IF(NOT WIN32)
-        MESSAGE(FATAL_ERROR "3dsMax target only valid on Windows")
-        RETURN()
-    ENDIF()
-    
-    SET(FBX_3DSMAX 1)
-    STRING(SUBSTRING ${TARGET_PRODUCT} 8 4 VER)
-    SET(FBXEXT_TARGET "3dsMax${VER}_") 
-    
-
-    #把这里的路径改成你的Max SDk文件夹路径
-    SET(MAXSDKPATH "D:/FBXSDK/Max SDK/${TARGET_PRODUCT}/maxsdk")
-    
-    SET(FBX_EXTRA_INCLUDE_PATH "${FBX_ROOT}/include/libxml2;${MAXSDKPATH}/include")
-    SET(FBX_EXTRA_LIBS_PATH "${MAXSDKPATH}/lib/${FBX_ARCH}/Release")
-    SET(FBX_EXTRA_LIBS
-        ${FBX_EXTRA_LIBS_PATH}/edmodel.lib
-        ${FBX_EXTRA_LIBS_PATH}/core.lib
-        ${FBX_EXTRA_LIBS_PATH}/geom.lib
-        ${FBX_EXTRA_LIBS_PATH}/gfx.lib
-        ${FBX_EXTRA_LIBS_PATH}/mesh.lib
-        ${FBX_EXTRA_LIBS_PATH}/maxutil.lib
-        ${FBX_EXTRA_LIBS_PATH}/maxscrpt.lib
-        ${FBX_EXTRA_LIBS_PATH}/bmm.lib
-        ${FBX_EXTRA_LIBS_PATH}/mnmath.lib
-        ${FBX_EXTRA_LIBS_PATH}/paramblk2.lib
-        ${FBX_EXTRA_LIBS_PATH}/igame.lib
-        ${FBX_EXTRA_LIBS_PATH}/poly.lib
-    )
 ELSE()
     MESSAGE("Unknown TARGET_PRODUCT specification ('${TARGET_PRODUCT}')")
-    MESSAGE("Must be either 'MayaYYYY' or '3ds Max YYYY' where YYYY is the 4 digit version number.")
+    MESSAGE("Must be 'MayaYYYY' where YYYY is the 4 digit version number.")
     MESSAGE(FATAL_ERROR "")
     RETURN()
 ENDIF()

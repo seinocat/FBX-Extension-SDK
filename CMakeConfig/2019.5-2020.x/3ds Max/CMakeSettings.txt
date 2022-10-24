@@ -1,0 +1,244 @@
+# ===================================================================================
+#
+# PRE-REQUISITES
+#
+# ===================================================================================
+
+STRING(REGEX REPLACE "/[^/]*$" "" FBX_CMAKE_ROOT "${CMAKE_CURRENT_LIST_FILE}")
+GET_FILENAME_COMPONENT(FBX_ROOT  "${FBX_CMAKE_ROOT}/.." ABSOLUTE)
+STRING(REGEX MATCH "[^/]+$" FBX_CMAKE_OUTPUT_FOLDER "${CMAKE_CURRENT_BINARY_DIR}")
+
+SET(FBX_CMAKELIST_DEPENDENT)
+IF(WIN32 AND CMAKE_SUPPRESS_REGENERATION)
+    SET(FBX_CMAKELIST_DEPENDENT "CMakeLists.txt")
+ENDIF(WIN32 AND CMAKE_SUPPRESS_REGENERATION)
+
+IF(NOT WIN32 AND NOT APPLE)
+    # assume we are on Linux
+    SET(LINUX 1)
+ENDIF()
+
+# ===================================================================================
+#
+# MACROS SECTION
+#
+# ===================================================================================
+
+MACRO(SETPOLICY policy state)
+    if(POLICY ${policy})
+        cmake_policy(SET ${policy} ${state})
+    endif()
+ENDMACRO(SETPOLICY policy state)
+
+
+MACRO(SET_SAMPLES_GLOBAL_FLAGS)
+    SET(FBX_TMP_TARGET_LIBS ${FBX_REQUIRED_LIBS_DEPENDENCY})
+    IF(NOT WIN32)
+        IF(APPLE)
+            IF(NOT FBX_CLANG)
+                SET(FBX_LINKER_FLAGS "-framework Carbon -framework SystemConfiguration ${FBX_LINKER_FLAGS}")
+            ELSE(NOT FBX_CLANG)
+                SET(FBX_LINKER_FLAGS "-framework CoreFoundation -framework SystemConfiguration ${FBX_LINKER_FLAGS}")
+            ENDIF(NOT FBX_CLANG)
+            SET(FBX_TMP_TARGET_LIBS ${FBX_TMP_TARGET_LIBS} iconv)
+        ENDIF(APPLE)
+        IF(FBX_LINKER_FLAGS)
+            SET_TARGET_PROPERTIES(${FBX_TARGET_NAME} PROPERTIES LINK_FLAGS ${FBX_LINKER_FLAGS})
+        ENDIF()
+    ENDIF(NOT WIN32)
+
+    INCLUDE_DIRECTORIES(BEFORE "${FBX_ROOT}/include")
+    INCLUDE_DIRECTORIES(AFTER ${FBX_EXTRA_INCLUDE_PATH})
+    
+    IF(WIN32)
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W4 ${FBX_CC_RTLd}")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${FBX_CC_RTL}")
+    ELSE()
+        SET(CMAKE_CXX_FLAGS "-std=c++11 -m64 ${CMAKE_CXX_FLAGS}")
+        IF (FBX_DEBUG)
+            SET(CMAKE_CXX_FLAGS "-D_DEBUG -g ${CMAKE_CXX_FLAGS}")
+        ELSE()
+            SET(CMAKE_CXX_FLAGS "-D_NDEBUG -Os ${CMAKE_CXX_FLAGS}")
+        ENDIF()
+    ENDIF()
+    
+    ADD_DEFINITIONS(-DFBXSDK_SHARED)
+    IF(FBX_3DSMAX)
+        ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
+    ENDIF()
+    IF(APPLE)
+        ADD_DEFINITIONS(-DOSMac_)
+    ENDIF()
+
+    TARGET_LINK_LIBRARIES(${FBX_TARGET_NAME} ${FBX_TMP_TARGET_LIBS})
+    SET(FBX_TMP_TARGET_LIBS)
+ENDMACRO(SET_SAMPLES_GLOBAL_FLAGS)
+
+
+MACRO(FBX_PROJECT project subdir)
+    SET(FBX_PROJECT_NAME   ${project})
+    SET(FBX_TARGET_NAME    ${project})
+    SET(FBX_PROJECT_SUBDIR ${subdir} )
+    
+    SET(TMP_COMPILER ${FBX_COMPILER})
+    IF(FBX_RTL_SUFFX)
+        SET(TMP_COMPILER ${FBX_COMPILER}${FBX_RTL_SUFFX})
+    ENDIF()
+    
+    IF (WIN32)
+        SET(FBX_BUILD_ROOT "${FBX_ROOT}/bin/${TMP_COMPILER}") #${CMAKE_CFG_INTDIR} is automatically added by CMake
+    ELSEIF(APPLE OR LINUX)
+        SET(FBX_BUILD_ROOT "${FBX_ROOT}/bin/${TMP_COMPILER}/${FBX_VARIANT}")
+    ELSE()
+        MESSAGE(FATAL_ERROR "Unsupported platform.")
+        RETURN()
+    ENDIF()        
+    
+    PROJECT(${project} ${ARGN})
+    SET(PROJECT_BINARY_DIR     "${FBX_BUILD_ROOT}")
+    SET(EXECUTABLE_OUTPUT_PATH "${FBX_BUILD_ROOT}")
+    SET(LIBRARY_OUTPUT_PATH    "${FBX_BUILD_ROOT}")
+ENDMACRO(FBX_PROJECT project subdir)
+
+
+# ===================================================================================
+#
+# COMMON SECTION
+#
+# ===================================================================================
+IF(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER ${CMAKE_MIN_REQ_VERSION})
+    IF (${CMAKE_MAJOR_VERSION} LESS 3)
+        SETPOLICY(CMP0005 OLD)
+        SETPOLICY(CMP0003 OLD)
+        SETPOLICY(CMP0011 OLD)
+    ELSE()
+        SETPOLICY(CMP0003 NEW)
+        SETPOLICY(CMP0011 NEW)
+    ENDIF()
+    IF(APPLE)
+        SETPOLICY(CMP0042 OLD)
+        SETPOLICY(CMP0045 OLD)
+    ENDIF()
+ENDIF()
+
+
+SET(FBXEXT_TARGET)      # target product name deducted from command line -DTARGET_PRODUCT=
+SET(FBX_VARIANT)        # can be set at command line with -DFBX_VARIANT=debug or release (Unix only)
+SET(FBX_ARCH "x64")     # only 64 bits
+SET(TARGET_PRODUCT "3ds Max 2018") #修改成fbx ext对应的dcc版本
+
+
+IF(NOT FBX_VARIANT)
+    SET(FBX_VARIANT "debug")
+ENDIF()
+
+IF (FBX_VARIANT MATCHES "debug")
+    SET(FBX_DEBUG 1)
+ELSE()
+    SET(FBX_DEBUG)
+ENDIF()
+
+
+
+IF(WIN32)
+    SET(CMAKE_USE_RELATIVE_PATHS 0)
+    SET(LIB_EXTENSION ".lib")
+
+    IF(CMAKE_CONFIGURATION_TYPES)      
+        set(CMAKE_CONFIGURATION_TYPES Debug Release)
+        set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "Reset the configurations to what we need" FORCE)
+    ENDIF()
+    
+    SET(FBX_VARIANT "$(Configuration)")
+    IF(MSVC_VERSION EQUAL 1700)
+        SET(FBX_COMPILER "vs2012")
+    ELSEIF(MSVC_VERSION EQUAL 1800)
+        SET(FBX_COMPILER "vs2013")
+    ELSEIF(MSVC_VERSION EQUAL 1900)
+        SET(FBX_COMPILER "vs2015")
+    ELSEIF(MSVC_VERSION EQUAL 1911)
+        SET(FBX_COMPILER "vs2017")
+    ELSEIF(MSVC_VERSION EQUAL 1921)
+        SET(FBX_COMPILER "vs2019")
+    ELSEIF(MSVC_VERSION EQUAL 1931)
+        SET(FBX_COMPILER "vs2022")
+    ENDIF()
+    SET(FBX_CC_RTLd "/MDd")
+    SET(FBX_CC_RTL "/MD")
+
+    SET(FBX_FILESDK_LIB "${FBX_ROOT}/lib/${FBX_COMPILER}/libfbxsdk-adsk${LIB_EXTENSION}")
+ELSE(WIN32)
+    MESSAGE("Detecting compiler version used")
+    EXEC_PROGRAM(${CMAKE_CXX_COMPILER} ARGS --version OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
+    IF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        MESSAGE("Detected Clang ${CMAKE_CXX_COMPILER_VERSION}")
+        SET(FBX_COMPILER "clang")
+        SET(FBX_CLANG 1)
+    ELSE()
+        SET(FBX_COMPILER "gcc")
+        IF(CMAKE_CXX_COMPILER_VERSION MATCHES " [4-9]\\.[0-9].*")
+            MESSAGE( "Detected GCC >= 4.0" )
+        ELSE()
+            MESSAGE(FATAL_ERROR  "Detected " ${GCC_PREFIX} " only GCC 4.x and higher supported")
+        ENDIF()
+    ENDIF()
+
+    SET(LIB_EXTENSION ".dylib")
+    IF(NOT APPLE)
+        SET(LINUX TRUE)
+        SET(LIB_EXTENSION ".so")
+    ENDIF(NOT APPLE)
+    SET(FBX_FILESDK_LIB "fbxsdk-adsk${LIB_EXTENSION}")
+
+    # Abort if MAYAPATH is not defined
+    #IF ("$ENV{MAYAPATH}" STREQUAL "")
+    #   MESSAGE(FATAL_ERROR "environment variable MAYAPATH is not set.")
+    #   RETURN()
+    #ENDIF()
+ENDIF()
+
+# check that -DTARGET_PRODUCT has been specified at invocation
+IF(NOT TARGET_PRODUCT)
+    MESSAGE(FATAL_ERROR "Missing TARGET_PRODUCT define")
+    RETURN()
+ENDIF()
+
+IF(TARGET_PRODUCT MATCHES "^3ds Max [0-9]+$")
+    IF(NOT WIN32)
+        MESSAGE(FATAL_ERROR "3dsMax target only valid on Windows")
+        RETURN()
+    ENDIF()
+    SET(FBX_3DSMAX 1)
+
+
+    STRING(SUBSTRING ${TARGET_PRODUCT} 8 4 VER)
+    SET(FBXEXT_TARGET "3dsMax${VER}_") 
+    
+
+    #把这里的路径改成你的Max SDk文件夹路径
+    SET(MAXSDKPATH "D:/FBXSDK/Max SDK/${TARGET_PRODUCT}/maxsdk")
+    
+    SET(FBX_EXTRA_INCLUDE_PATH "${FBX_ROOT}/include/libxml2;${MAXSDKPATH}/include")
+    SET(FBX_EXTRA_LIBS_PATH "${MAXSDKPATH}/lib/${FBX_ARCH}/Release")
+    SET(FBX_EXTRA_LIBS
+        ${FBX_EXTRA_LIBS_PATH}/edmodel.lib
+        ${FBX_EXTRA_LIBS_PATH}/core.lib
+        ${FBX_EXTRA_LIBS_PATH}/geom.lib
+        ${FBX_EXTRA_LIBS_PATH}/gfx.lib
+        ${FBX_EXTRA_LIBS_PATH}/mesh.lib
+        ${FBX_EXTRA_LIBS_PATH}/maxutil.lib
+        ${FBX_EXTRA_LIBS_PATH}/maxscrpt.lib
+        ${FBX_EXTRA_LIBS_PATH}/bmm.lib
+        ${FBX_EXTRA_LIBS_PATH}/mnmath.lib
+        ${FBX_EXTRA_LIBS_PATH}/paramblk2.lib
+        ${FBX_EXTRA_LIBS_PATH}/igame.lib
+        ${FBX_EXTRA_LIBS_PATH}/poly.lib
+    )
+ELSE()
+    MESSAGE("Unknown TARGET_PRODUCT specification ('${TARGET_PRODUCT}')")
+    MESSAGE("Must be '3ds Max YYYY' where YYYY is the 4 digit version number.")
+    MESSAGE(FATAL_ERROR "")
+    RETURN()
+ENDIF()
+
+SET(FBX_REQUIRED_LIBS_DEPENDENCY ${FBX_FILESDK_LIB} ${FBX_EXTRA_LIBS})
