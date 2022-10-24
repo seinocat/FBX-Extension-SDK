@@ -125,7 +125,7 @@ ENDIF()
 SET(FBXEXT_TARGET)      # target product name deducted from command line -DTARGET_PRODUCT=
 SET(FBX_VARIANT)        # can be set at command line with -DFBX_VARIANT=debug or release (Unix only)
 SET(FBX_ARCH "x64")     # only 64 bits
-SET(TARGET_PRODUCT "Maya 2018") #修改成fbx ext对应的dcc版本
+SET(TARGET_PRODUCT "Maya2018") #修改成fbx ext对应的dcc版本
 
 
 IF(NOT FBX_VARIANT)
